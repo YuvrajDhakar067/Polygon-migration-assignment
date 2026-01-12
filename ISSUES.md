@@ -23,10 +23,10 @@
 When you re-migrate a problem that used to have more test cases, the old extra ones just stay in the database. The code updates existing test cases and creates new ones, but never deletes the ones that are no longer in Polygon.
 
 **Impact**:
-- Database has stale test cases that dont exist in Polygon anymore
-- Test case count in DB doesnt match actual Polygon count
+- Database has stale test cases that don't exist in Polygon anymore
+- Test case count in DB doesn't match actual Polygon count
 - Users see wrong test cases when viewing problem
-- Database and cloud storage get out of sync (storage correctly deletes old files, but DB doesnt)
+- Database and cloud storage get out of sync (storage correctly deletes old files, but DB doesn't)
 
 **Suggested Fix**:
 Delete all existing test cases before creating new ones, similar to how cloud storage does it:
@@ -49,7 +49,7 @@ If two different Polygon problems have the same title (like "Two Sum"), the slug
 **Impact**:
 - Migration fails with database error
 - User sees confusing IntegrityError page
-- Second problem cant be migrated at all
+- Second problem can't be migrated at all
 - No way to work around it
 
 **Suggested Fix**:
@@ -75,7 +75,7 @@ while Problem.objects.filter(slug=slug).exclude(pk=problem_obj.pk if problem_obj
 Test cases saved to database are truncated to 260 characters, but full data is saved to cloud storage. This creates inconsistency - DB has partial data, storage has full data.
 
 **Impact**:
-- Users cant see full test case in database
+- Users can't see full test case in database
 - If storage fails, you lose full test data
 - Hard to debug issues with truncated data
 - Documentation might say 1000 chars but code does 260
@@ -142,7 +142,7 @@ if not sample_tests:
 When fetching/migrating problems with many test cases, it can take 30+ seconds. User sees no progress, might think page is frozen.
 
 **Impact**:
-- Users might refresh page thinking its broken
+- Users might refresh page thinking it's broken
 - Poor user experience
 - No feedback during long waits
 
@@ -249,7 +249,7 @@ Either change to 1000 or update all docs to say 260. Better to use 1000 since Te
 **Location**: `problems/views.py:500-555`
 
 **Description**:
-Test case migration is not wrapped in transaction. If it fails halfway, some test cases are saved, some arent. Partial state.
+Test case migration is not wrapped in transaction. If it fails halfway, some test cases are saved, some aren't. Partial state.
 
 **Impact**:
 - Database in inconsistent state on failure
@@ -305,7 +305,7 @@ except Exception as e:
 ```
 
 **Impact**:
-- User doesnt know solution fetch failed
+- User doesn't know solution fetch failed
 - Silent failures are hard to debug
 - Missing data without explanation
 
@@ -361,7 +361,7 @@ Looking at the code in `views.py:443-467`, here's what happens:
    - This is a bug - old samples should be cleaned up
 
 4. **Is the behavior correct?**
-   - Partially. It correctly saves 0 samples, but doesnt clean up old samples if they existed before. Should delete all sample cases first.
+   - Partially. It correctly saves 0 samples, but doesn't clean up old samples if they existed before. Should delete all sample cases first.
 
 **Code References**:
 - `views.py:443` - Filtering sample tests
@@ -397,7 +397,7 @@ This is a serious bug. Here's what happens:
    - Database shows wrong test case count
    - Old test data still in DB
    - Users see stale test cases
-   - DB and storage dont match
+   - DB and storage don't match
 
 **Code References**:
 - `views.py:520` - Gets existing test cases
@@ -425,11 +425,11 @@ This will crash with a database error. Here's why:
 3. **What does the user see?**
    - Error page with `IntegrityError: duplicate key value violates unique constraint "problems_problem_slug_key"`
    - Confusing database error message
-   - Second problem cant be migrated
+   - Second problem can't be migrated
 
 4. **Is first problem affected?**
    - No, first problem stays in database unchanged
-   - But second one cant be added
+   - But second one can't be added
 
 **Code References**:
 - `views.py:288` - Slug generation: `slug = slugify(title)`
@@ -464,10 +464,10 @@ This will crash with a database error. Here's why:
 4. **DB vs cloud storage consistency:**
    - Database has: First 260 chars only
    - Cloud storage has: Full data (no truncation)
-   - They dont match - inconsistency
+   - They don't match - inconsistency
 
 5. **Why this causes problems:**
-   - Incomplete test data in DB - cant reconstruct full test from DB alone
+   - Incomplete test data in DB - can't reconstruct full test from DB alone
    - If storage fails, you lose full test data
    - Large test cases break - first 260 chars might just be header, actual data is lost
    - Hard to debug - when checking DB you only see partial test
@@ -501,7 +501,7 @@ The slug collision (C2/P2) will definitely happen in real world since common pro
 
 The truncation at 260 chars seems way too small. Should be at least 1000 since TextField supports it.
 
-Cloud storage migration correctly deletes old files first, but DB migration doesnt. This inconsistency in design is confusing.
+Cloud storage migration correctly deletes old files first, but DB migration doesn't. This inconsistency in design is confusing.
 
 No rollback mechanism if migration fails partway through. If it crashes, database might be in partial state.
 
